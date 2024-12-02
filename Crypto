@@ -1,0 +1,45 @@
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+
+def encrypt_string_with_rsa_dict_key(key_data: dict, message: str) -> bytes:
+    """
+    Encrypts a string using an RSA public key given in dictionary format.
+    
+    :param key_data: Dictionary containing `n` (modulus) and `e` (public exponent).
+                     Example: {"keyid": "1", "n": 1234567890, "e": 65537}
+    :param message: The plaintext message to encrypt.
+    :return: The encrypted message as bytes.
+    """
+    # Extract n and e values from the dictionary
+    n = key_data["n"]
+    e = key_data["e"]
+    
+    # Reconstruct the RSA public key
+    public_numbers = RSAPublicNumbers(e, n)
+    public_key = public_numbers.public_key(default_backend())
+    
+    # Encrypt the message
+    encrypted_message = public_key.encrypt(
+        message.encode(),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return encrypted_message
+
+# Example usage
+if __name__ == "__main__":
+    # Example RSA key in dictionary format
+    rsa_key_data = {
+        "keyid": "1",
+        "n": 2426697103440107382441879319262438104930723031230040139475864709272508353137345490477683882071116432765702796419693433127012919884427808679178894866071929,
+        "e": 65537
+    }
+    
+    plaintext_message = "This is a secret message."
+    encrypted_message = encrypt_string_with_rsa_dict_key(rsa_key_data, plaintext_message)
+    print("Encrypted message:", encrypted_message)
